@@ -27,6 +27,10 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
     raycaster: any = undefined;
     pointer: any = undefined;
     onPointerMove: any = undefined;
+    state: any = {
+        selectedObject: undefined,
+        originalColor: undefined
+    }
 
     constructor(props:ThreeDViewProps){
         super(props);
@@ -47,6 +51,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         }
         this.view = React.createRef();
         this.renderer.setSize( width, height );
+        this.render = this.render.bind(this) 
     }
     componentDidMount(){
         if(this.view === undefined){
@@ -76,16 +81,49 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         const controls = this.controls;
         const raycaster = this.raycaster;
         const pointer = this.pointer;
-        function animate() {
+        const state = this.state;
+        const updateObj = (obj:any) => {
+            this.setState({selectedObject: obj});
+        }
+        const updateColor = (color:any) => {
+            this.setState({originalColor: color});
+        }
+        //const setState = this.setState;
+        var animate = function () {
             requestAnimationFrame( animate );
             raycaster.setFromCamera( pointer, camera );
             const intersects = raycaster.intersectObjects( scene.children );
-            for ( let i = 0; i < intersects.length; i ++ ) {
-                intersects[ i ].object.material.color.set( 0xff0000 );
+
+            //console.log(intersects);
+            if(intersects.length){
+                const obj = intersects[0].object;
+                if(obj !== state.selectedObject){
+                    if(state.selectedObject){
+                        // Reset the color of the last selected object and remove it
+                        state.selectedObject.material.color.set(state.originalColor);
+                    }
+                    // Update selection
+                    updateObj(obj);
+                    updateColor(obj.material.color);
+                    // console.log(setState);
+                    // Highlight selected object
+                    obj.material.color.set(0xff0000)
+                }
             }
+            else if(state.selectedObject) {
+                // Reset the color of the last selected object and remove it
+                state.selectedObject.material.color.set(state.originalColor);
+                // Clear selection
+                //setState({selectedObject: undefined, originalColor: undefined});
+            }
+            // for ( let i = 0; i < intersects.length; i ++ ) {
+            //     console.log(intersects[ i ].object.material.color);
+            //     // intersects[ i ].object.scale.set(new Vector3(1, 1, 1)) ;
+            // }
             controls.update();
             renderer.render( scene, camera );
         }
+        animate = animate.bind(this);
         animate();
         //this.renderer.render( scene, this.camera );
         return <div 
