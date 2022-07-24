@@ -21,6 +21,7 @@ interface ThreeDViewProps{
 
 export default class ThreeDView extends React.Component<ThreeDViewProps>{
     view: RefObject<any>|undefined = undefined;
+    scene: any = undefined;
     camera: any = undefined;
     renderer: any = undefined;
     controls: any = undefined;
@@ -39,6 +40,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         this.camera.position.y = 30;
         this.camera.lookAt(new Vector3(0,0,0));
         this.renderer = new WebGLRenderer();
+        this.scene = new Scene();
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.raycaster = new Raycaster();
         this.pointer = new Vector2();
@@ -51,7 +53,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         }
         this.view = React.createRef();
         this.renderer.setSize( width, height );
-        this.render = this.render.bind(this) 
+        this.animate = this.animate.bind(this);
     }
     componentDidMount(){
         if(this.view === undefined){
@@ -59,6 +61,19 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         }
         const elem = this.view.current;
         elem.appendChild(this.renderer.domElement);
+        this.animate();
+    }
+    componentDidUpdate(){
+        const { objects } = this.props;
+        const { scene } = this;
+        console.log("Component updated");
+        for(const key in objects){
+            const object = objects[key]
+            if(object.parent !== scene){
+                scene.add(object);
+                console.log("Object added");
+            }
+        }
     }
     componentWillUnmount(){
         if(!this.view){
@@ -70,62 +85,50 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             elem.removeChild(elem.lastChild);
         }
     }
-    render() {
-        const {width, height, objects} = this.props;
-        const scene = new Scene();
-        for(const key in objects){
-            scene.add( objects[key] );
-        }
-        const renderer = this.renderer;
-        const camera = this.camera;
-        const controls = this.controls;
-        const raycaster = this.raycaster;
-        const pointer = this.pointer;
-        const state = this.state;
-        const updateObj = (obj:any) => {
-            this.setState({selectedObject: obj});
-        }
-        const updateColor = (color:any) => {
-            this.setState({originalColor: color});
-        }
-        //const setState = this.setState;
-        var animate = function () {
-            requestAnimationFrame( animate );
-            raycaster.setFromCamera( pointer, camera );
-            const intersects = raycaster.intersectObjects( scene.children );
-
-            //console.log(intersects);
-            if(intersects.length){
-                const obj = intersects[0].object;
-                if(obj !== state.selectedObject){
-                    if(state.selectedObject){
-                        // Reset the color of the last selected object and remove it
-                        state.selectedObject.material.color.set(state.originalColor);
-                    }
-                    // Update selection
-                    updateObj(obj);
-                    updateColor(obj.material.color);
-                    // console.log(setState);
-                    // Highlight selected object
-                    obj.material.color.set(0xff0000)
+    animate() {
+        window.setTimeout(()=>{
+            requestAnimationFrame( this.animate );
+        }, 100);
+        
+        this.raycaster.setFromCamera( this.pointer, this.camera );
+        const intersects = this.raycaster.intersectObjects( this.scene.children );
+        if(intersects.length){
+            const object = intersects[0].object;
+            var restore_required = false;
+            var update_required = true;
+            if(this.state.selectedObject){
+                if(this.state.selectedObject === object){
+                    update_required = false;
+                }
+                else{
+                    restore_required = true;
                 }
             }
-            else if(state.selectedObject) {
-                // Reset the color of the last selected object and remove it
-                state.selectedObject.material.color.set(state.originalColor);
-                // Clear selection
-                //setState({selectedObject: undefined, originalColor: undefined});
+            if(restore_required){
+                // Restore object original color
+                console.log("Restoring to color: ", this.state.originalColor);  
+                this.state.selectedObject.material.color.set(this.state.originalColor);
             }
-            // for ( let i = 0; i < intersects.length; i ++ ) {
-            //     console.log(intersects[ i ].object.material.color);
-            //     // intersects[ i ].object.scale.set(new Vector3(1, 1, 1)) ;
-            // }
-            controls.update();
-            renderer.render( scene, camera );
+            if(update_required){
+                // Update selection
+                this.setState({selectedObject: object, originalColor: object.material.color.clone()});
+                // Highlight Selected Object
+                object.material.color.set(0xff0000)
+            }
         }
-        animate = animate.bind(this);
-        animate();
-        //this.renderer.render( scene, this.camera );
+        else if(this.state.selectedObject){
+            // Restore object original color
+            this.state.selectedObject.material.color.set(this.state.originalColor);
+            // Clear selection
+            this.setState({selectedObject: undefined, originalColor: undefined});
+        }
+
+        this.controls.update();
+        this.renderer.render( this.scene, this.camera );
+    }
+    render() {
+        const {width, height} = this.props;
+        
         return <div 
             ref={this.view}
             style={{border: "1px solid grey", width, height}}>
