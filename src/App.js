@@ -5,15 +5,10 @@ import {
   MeshBasicMaterial,
   Mesh,
   PointLight,
-  SphereGeometry
 } from 'three';
 import { useState } from 'react';
 import ThreeDObject from './components/ThreeDObject';
 
-
-const geometry = new SphereGeometry( 1.2, 32, 16 );
-const material = new MeshBasicMaterial( { color: 0xffff00 } );
-const sphere = new Mesh( geometry, material );
 
 var lights = [
   new PointLight( 0xAAAAAA, 1, 0 ),
@@ -33,7 +28,7 @@ lights[5].position.set(0, 0, -1000);
 
 
 function App() {
-  const [objects, setObjects] = useState([...lights, sphere])
+  const [objects, setObjects] = useState([...lights])
   const addbox = () => {
     const cube = new Mesh(
       new BoxGeometry( 1, 1, 1 ) ,
@@ -47,7 +42,7 @@ function App() {
   }
 
   const add3D = async () => {
-    const obj = await ThreeDObject('circleandcilender.gltf');
+    const obj = await ThreeDObject('man.gltf');
     if(obj){
       obj.scene.rotateX(45);
       setObjects([...objects, obj.scene ]);

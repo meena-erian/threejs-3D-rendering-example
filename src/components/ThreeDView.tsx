@@ -110,6 +110,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             if(update_required){
                 // Update selection
                 this.setState({selectedObject: object, originalColor: object.material.color.clone()});
+                console.log("Selected Object: ", object);
                 // Highlight Selected Object
                 object.material.color.set(0xffffff)
             }
@@ -130,6 +131,14 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         return <div 
             ref={this.view}
             style={{border: "1px solid grey", width, height}}>
+                {this.state.selectedObject && 
+                <p style={{
+                    position: "absolute",
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    textAlign: "center"
+                }}>{this.state.selectedObject.name}</p>}
             </div>
     }
 }
