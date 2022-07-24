@@ -28,6 +28,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
     raycaster: any = undefined;
     pointer: any = undefined;
     onPointerMove: any = undefined;
+    animationTimeout: any = undefined;
     state: any = {
         selectedObject: undefined,
         originalColor: undefined
@@ -66,12 +67,10 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
     componentDidUpdate(){
         const { objects } = this.props;
         const { scene } = this;
-        console.log("Component updated");
         for(const key in objects){
             const object = objects[key]
             if(object.parent !== scene){
                 scene.add(object);
-                console.log("Object added");
             }
         }
     }
@@ -84,12 +83,12 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         while(elem.firstChild) {
             elem.removeChild(elem.lastChild);
         }
+        window.clearTimeout(this.animationTimeout);
     }
     animate() {
-        window.setTimeout(()=>{
+        this.animationTimeout = window.setTimeout(()=>{
             requestAnimationFrame( this.animate );
         }, 100);
-        
         this.raycaster.setFromCamera( this.pointer, this.camera );
         const intersects = this.raycaster.intersectObjects( this.scene.children );
         if(intersects.length){
@@ -106,14 +105,13 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             }
             if(restore_required){
                 // Restore object original color
-                console.log("Restoring to color: ", this.state.originalColor);  
                 this.state.selectedObject.material.color.set(this.state.originalColor);
             }
             if(update_required){
                 // Update selection
                 this.setState({selectedObject: object, originalColor: object.material.color.clone()});
                 // Highlight Selected Object
-                object.material.color.set(0xff0000)
+                object.material.color.set(0xffffff)
             }
         }
         else if(this.state.selectedObject){
