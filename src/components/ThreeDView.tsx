@@ -27,11 +27,11 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
     controls: any = undefined;
     raycaster: any = undefined;
     pointer: any = undefined;
-    onPointerMove: any = undefined;
     animationTimeout: any = undefined;
     state: any = {
         selectedObject: undefined,
-        originalColor: undefined
+        originalColor: undefined,
+        pointer: {x:0, y:0}
     }
 
     constructor(props:ThreeDViewProps){
@@ -44,24 +44,19 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         this.scene = new Scene();
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.raycaster = new Raycaster();
-        this.pointer = new Vector2();
-        const pointer = this.pointer;
-        this.onPointerMove = function ( event: any ) {
-            const x = event.pageX - event.currentTarget.offsetLeft; 
-            const y = event.pageY - event.currentTarget.offsetTop; 
-            pointer.x = x / width * 2 - 1
-            pointer.y = - y / height * 2 + 1
-        }
         this.view = React.createRef();
         this.renderer.setSize( width, height );
         this.animate = this.animate.bind(this);
+        this.onPointerMove = this.onPointerMove.bind(this);
     }
     componentDidMount(){
         if(this.view === undefined){
             return
         }
         const elem = this.view.current;
+        console.log("Adding event listener to ", elem)
         elem.appendChild(this.renderer.domElement);
+        elem.addEventListener( 'pointermove', this.onPointerMove );
         this.animate();
     }
     componentDidUpdate(){
@@ -79,17 +74,26 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             return 
         }
         const elem = this.view.current;
-        elem.addEventListener( 'pointermove', this.onPointerMove );
         while(elem.firstChild) {
             elem.removeChild(elem.lastChild);
         }
         window.clearTimeout(this.animationTimeout);
     }
+    onPointerMove( event: any ) {
+        const {width, height} = this.props;
+        const x = event.pageX - event.currentTarget.offsetLeft; 
+        const y = event.pageY - event.currentTarget.offsetTop; 
+        const pointer_x = x / width * 2 - 1;
+        const pointer_y = - y / height * 2 + 1;
+        this.setState({pointer: {x:pointer_x, y:pointer_y}})
+        console.log("onPointerMove called: ", pointer_x, pointer_y)
+    }
     animate() {
         this.animationTimeout = window.setTimeout(()=>{
             requestAnimationFrame( this.animate );
         }, 100);
-        this.raycaster.setFromCamera( this.pointer, this.camera );
+        this.raycaster.setFromCamera( new Vector2(this.state.pointer.x, this.state.pointer.y), this.camera );
+        console.log("animate this.raycaster.setFromCamera ", this.state.pointer.x, this.state.pointer.y)
         const intersects = this.raycaster.intersectObjects( this.scene.children );
         if(intersects.length){
             const object = intersects[0].object;
