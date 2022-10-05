@@ -38,11 +38,18 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         super(props);
         var {width, height} = props;
         this.camera = new PerspectiveCamera( 75, width/height, 0.1, 1000 );
-        this.camera.position.y = 30;
-        this.camera.lookAt(new Vector3(0,0,0));
+        const cameraHeight = 1;
+        const cameraInitialHorizontalDistance = 1
+        this.camera.position.x = 0;
+        this.camera.position.y = cameraHeight;
+        this.camera.position.z = cameraInitialHorizontalDistance;
+        this.camera.lookAt(1, 1, 0)
         this.renderer = new WebGLRenderer();
         this.scene = new Scene();
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
+        this.controls.maxDistance = 3
+        this.controls.minDistance = 1
+        this.controls.target = new Vector3(0, cameraHeight, 0)
         this.raycaster = new Raycaster();
         this.view = React.createRef();
         this.renderer.setSize( width, height );
@@ -54,7 +61,6 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             return
         }
         const elem = this.view.current;
-        console.log("Adding event listener to ", elem)
         elem.appendChild(this.renderer.domElement);
         elem.addEventListener( 'pointermove', this.onPointerMove );
         this.animate();
@@ -86,14 +92,12 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         const pointer_x = x / width * 2 - 1;
         const pointer_y = - y / height * 2 + 1;
         this.setState({pointer: {x:pointer_x, y:pointer_y}})
-        console.log("onPointerMove called: ", pointer_x, pointer_y)
     }
     animate() {
         this.animationTimeout = window.setTimeout(()=>{
             requestAnimationFrame( this.animate );
         }, 100);
         this.raycaster.setFromCamera( new Vector2(this.state.pointer.x, this.state.pointer.y), this.camera );
-        console.log("animate this.raycaster.setFromCamera ", this.state.pointer.x, this.state.pointer.y)
         const intersects = this.raycaster.intersectObjects( this.scene.children );
         if(intersects.length){
             const object = intersects[0].object;
@@ -109,19 +113,35 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
             }
             if(restore_required){
                 // Restore object original color
-                this.state.selectedObject.material.color.set(this.state.originalColor);
+                console.log("Restoring...", this.state.originalColor, this.state.originalObjectMap)
+                const selectedObject =this.state.selectedObject;
+                selectedObject.material.color.set(this.state.originalColor);
+                selectedObject.material.map = this.state.originalObjectMap;
+                selectedObject.material.needsUpdate = true;
             }
             if(update_required){
                 // Update selection
-                this.setState({selectedObject: object, originalColor: object.material.color.clone()});
+                this.setState({
+                    selectedObject: object,
+                    originalColor: object.material.color.clone(),
+                    originalObjectMap: object.material.map?.clone()
+                });
                 console.log("Selected Object: ", object);
                 // Highlight Selected Object
                 object.material.color.set(0xffffff)
+                object.material.map = null;
+                object.material.needsUpdate = true;
+                //object.material.map
+                console.log("Object texture: ", object.material)
             }
         }
         else if(this.state.selectedObject){
             // Restore object original color
-            this.state.selectedObject.material.color.set(this.state.originalColor);
+            console.log("Restoring...", this.state.originalColor, this.state.originalObjectMap)
+            const selectedObject =this.state.selectedObject;
+            selectedObject.material.color.set(this.state.originalColor);
+            selectedObject.material.map = this.state.originalObjectMap;
+            selectedObject.material.needsUpdate = true;
             // Clear selection
             this.setState({selectedObject: undefined, originalColor: undefined});
         }

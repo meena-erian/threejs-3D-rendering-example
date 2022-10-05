@@ -42,9 +42,8 @@ function App() {
   }
 
   const add3D = async () => {
-    const obj = await ThreeDObject('man.gltf');
+    const obj = await ThreeDObject('mwc/scene.gltf');
     if(obj){
-      obj.scene.rotateX(45);
       setObjects([...objects, obj.scene ]);
     }else{
       console.log("Failed to load object");
