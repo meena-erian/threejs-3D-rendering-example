@@ -38,12 +38,11 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         super(props);
         var {width, height} = props;
         this.camera = new PerspectiveCamera( 75, width/height, 0.1, 1000 );
-        const cameraHeight = 1;
+        const cameraHeight = 0;
         const cameraInitialHorizontalDistance = 1
         this.camera.position.x = 0;
         this.camera.position.y = cameraHeight;
         this.camera.position.z = cameraInitialHorizontalDistance;
-        this.camera.lookAt(1, 1, 0)
         this.renderer = new WebGLRenderer();
         this.scene = new Scene();
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
@@ -128,6 +127,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
                 });
                 console.log("Selected Object: ", object);
                 // Highlight Selected Object
+                object.material = object.material.clone();
                 object.material.color.set(0xffffff)
                 object.material.map = null;
                 object.material.needsUpdate = true;
