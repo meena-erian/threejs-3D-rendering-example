@@ -42,8 +42,7 @@ function App() {
   }
 
   const add3D = async () => {
-    //const obj = await ThreeDObject('mwc/scene.gltf');
-    const obj = await ThreeDObject('man.glb');
+    const obj = await ThreeDObject('man/man.gltf');
     if(obj){
       setObjects([...objects, obj.scene ]);
     }else{
