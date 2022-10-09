@@ -47,7 +47,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         this.scene = new Scene();
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.controls.maxDistance = 3
-        this.controls.minDistance = 1
+        this.controls.minDistance = 0.2
         this.controls.target = new Vector3(0, cameraHeight, 0)
         this.raycaster = new Raycaster();
         this.view = React.createRef();
