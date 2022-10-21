@@ -39,7 +39,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
         var {width, height} = props;
         this.camera = new PerspectiveCamera( 75, width/height, 0.1, 1000 );
         const cameraHeight = 0;
-        const cameraInitialHorizontalDistance = 1
+        const cameraInitialHorizontalDistance = 1.5
         this.camera.position.x = 0;
         this.camera.position.y = cameraHeight;
         this.camera.position.z = cameraInitialHorizontalDistance;
