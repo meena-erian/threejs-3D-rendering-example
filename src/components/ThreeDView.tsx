@@ -95,7 +95,7 @@ export default class ThreeDView extends React.Component<ThreeDViewProps>{
     animate() {
         this.animationTimeout = window.setTimeout(()=>{
             requestAnimationFrame( this.animate );
-        }, 100);
+        }, 300);
         this.raycaster.setFromCamera( new Vector2(this.state.pointer.x, this.state.pointer.y), this.camera );
         const intersects = this.raycaster.intersectObjects( this.scene.children );
         if(intersects.length){
