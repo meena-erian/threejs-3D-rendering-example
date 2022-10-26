@@ -63,48 +63,54 @@ export default function View3D(props: View3DProps) {
     const [controls,] = useState(useMemo(() => getControls(camera, renderer), [camera, renderer]));
     const [raycaster,] = useState(useMemo(() => new Raycaster(), []));
     const [selection, setSelection] = useState(undefined as undefined | ObjectSelection);
-    const [pointer, setPointer] = useState(undefined as undefined | { x: number, y: number });
+    const [pointer, setPointer] = useState({ x: 1, y: 1 } as { x: number, y: number });
     const view = useRef(undefined as any);
 
     useEffect(() => { // Called only once to set the view
         if (view) {
             view.current.appendChild(renderer.domElement);
-            view.current.addEventListener('pointermove',
-                function onPointerMove(event: any) {
-                    const x = event.pageX - event.currentTarget.offsetLeft;
-                    const y = event.pageY - event.currentTarget.offsetTop;
-                    const pointer_x = x / width * 2 - 1;
-                    const pointer_y = - y / height * 2 + 1;
-                    const newPointer = { x: pointer_x, y: pointer_y }
-                    console.log("Setting pointer at ", newPointer);
-                    setPointer(newPointer);
+            var lastPointerUpdate = new Date();
+            function onPointerMove(event: any) {
+                const currentTime = new Date();
+                if (currentTime.getTime() - lastPointerUpdate.getTime() < 100) {
+                    return;
                 }
-            );
-        }
-    }, [view, renderer.domElement, height, width]);
+                const x = event.pageX - event.currentTarget.offsetLeft;
+                const y = event.pageY - event.currentTarget.offsetTop;
+                const pointer_x = x / width * 2 - 1;
+                const pointer_y = - y / height * 2 + 1;
+                const newPointer = { x: pointer_x, y: pointer_y }
+                console.log("Setting pointer at ", newPointer);
+                setPointer(newPointer);
+                lastPointerUpdate = currentTime;
+            }
+            view.current.addEventListener('pointermove', onPointerMove);
 
-    useEffect(() => { // Called whenever the content of the 3D world changes
-        while (scene.children.length > 0) {
-            scene.remove(scene.children[0]);
-        }
-        for (const key in objects) {
-            const object = objects[key]
-            if (object.parent !== scene) {
-                scene.add(object);
+            return () => {
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+                view.current.removeEventListener('pointermove', onPointerMove)
             }
         }
-    }, [objects, scene]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [view, renderer.domElement, height, width]);
 
-    console.log("Current pointer ", pointer);
 
-
-    if (pointer) {
-        console.log("Settings raycaster from camera to ", pointer)
-        raycaster.setFromCamera(new Vector2(pointer.x, pointer.y), camera);
+    while (scene.children.length > 0) {
+        scene.remove(scene.children[0]);
     }
+    for (const key in objects) {
+        const object = objects[key]
+        if (object.parent !== scene) {
+            scene.add(object);
+        }
+    }
+
+
+    raycaster.setFromCamera(new Vector2(pointer.x, pointer.y), camera);
+
     const intersects = raycaster.intersectObjects(scene.children);
     if (intersects.length) {
-        console.log("Intersected objects: ", intersects)
+        //console.log("Intersected objects: ", intersects)
         const object = intersects[0].object as Mesh<BufferGeometry, MeshBasicMaterial>;
         var restore_required = false;
         var update_required = true;
@@ -130,26 +136,25 @@ export default function View3D(props: View3DProps) {
                 originalColor: object.material.color.clone(),
                 originalTexture: object.material.map?.clone() || null
             });
-            console.log("Selected Object: ", object);
+            console.log("Selected Object updated to: ", object);
             // Highlight Selected Object
             object.material = object.material.clone();
             object.material.color.set(0xffffff)
             object.material.map = null;
             object.material.needsUpdate = true;
             //object.material.map
-            console.log("Object texture: ", object.material)
+            //console.log("Object texture: ", object.material)
         }
     }
     else if (selection) {
         // Restore object original color
-        console.log("Restoring...", selection.originalColor, selection.originalTexture)
+        console.log("Restoring only...", selection.originalColor, selection.originalTexture)
         selection.object.material.color.set(selection.originalColor);
         selection.object.material.map = selection.originalTexture;
         selection.object.material.needsUpdate = true;
         // Clear selection
         setSelection(undefined)
     }
-
     controls.update();
     renderer.render(scene, camera);
     return (
